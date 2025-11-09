@@ -7,11 +7,18 @@
     <h1 class="h2">User Management</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <a href="{{ route('users.create') }}" class="btn btn-sm btn-primary">
-            <i class="bi bi-plus-circle"></i>
-            Create New User
+            <i class="bi bi-plus-circle"></i> Create New User
         </a>
     </div>
 </div>
+
+@if(session('success'))
+<div class="alert alert-success">{{ session('success') }}</div>
+@endif
+
+@if(session('error'))
+<div class="alert alert-danger">{{ session('error') }}</div>
+@endif
 
 <div class="card">
     <div class="card-body">
@@ -19,47 +26,48 @@
             <table class="table table-striped table-hover">
                 <thead>
                     <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Name</th>
-                        <th scope="col">Email</th>
-                        <th scope="col">Role</th>
-                        <th scope="col">Actions</th>
+                        <th>#</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th width="150">Actions</th>
                     </tr>
                 </thead>
+
                 <tbody>
-                    {{-- Contoh Data 1 (Admin) --}}
+                    @forelse($users as $u)
                     <tr>
-                        <td>1</td>
-                        <td>Super Admin</td>
-                        <td>admin@fashion.com</td>
-                        <td><span class="badge bg-primary">Admin</span></td>
+                        <td>{{ $u['id'] }}</td>
+                        <td>{{ $u['username'] }}</td>
+                        <td>{{ $u['email'] }}</td>
                         <td>
-                            <a href="{{ route('users.edit') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-square"></i> Edit</a>
-                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>
+                            <span class="badge 
+                                {{ $u['role'] == 'admin' ? 'bg-primary' : 'bg-info' }}">
+                                {{ ucfirst($u['role']) }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ route('users.edit', $u['id']) }}"
+                               class="btn btn-sm btn-outline-primary">
+                               <i class="bi bi-pencil-square"></i>
+                            </a>
+
+                            <form action="{{ route('users.destroy', $u['id']) }}"
+                                  method="POST" class="d-inline"
+                                  onsubmit="return confirm('Delete this user?')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
-                    {{-- Contoh Data 2 (POS/Kasir) --}}
+                    @empty
                     <tr>
-                        <td>2</td>
-                        <td>Kasir 1</td>
-                        <td>kasir1@fashion.com</td>
-                        <td><span class="badge bg-info">POS</span></td>
-                        <td>
-                            <a href="{{ route('users.edit') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-square"></i> Edit</a>
-                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>
-                        </td>
+                        <td colspan="5" class="text-center text-muted">No users found</td>
                     </tr>
-                    {{-- Contoh Data 3 (Staff/Purchasing) --}}
-                    <tr>
-                        <td>3</td>
-                        <td>Staff Gudang</td>
-                        <td>staff@fashion.com</td>
-                        <td><span class="badge bg-secondary">Purchasing</span></td>
-                        <td>
-                            <a href="{{ route('users.edit') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-square"></i> Edit</a>
-                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>
-                        </td>
-                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

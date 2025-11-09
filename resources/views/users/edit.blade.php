@@ -4,41 +4,54 @@
 
 @section('content')
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Edit User: Super Admin</h1>
+    <h1 class="h2">Edit User: {{ $user['username'] ?? '—' }}</h1>
 </div>
 
 <div class="card">
     <div class="card-body">
-        <form action="#" method="POST">
-            {{-- @csrf --}}
-            {{-- @method('PUT') --}}
-            
+        <form action="{{ route('users.update', $user['id']) }}" method="POST">
+            @csrf
+            @method('PUT')
+
             {{-- Bagian Detail Pengguna --}}
             <h5>User Details</h5>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="name" class="form-label">Full Name</label>
-                    {{-- Di aplikasi nyata, 'value' akan diisi dari data controller --}}
-                    <input type="text" class="form-control" id="name" value="Super Admin" required>
+                    <label for="username" class="form-label">Username</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="username"
+                        name="username"
+                        value="{{ old('username', $user['username'] ?? '') }}"
+                        required
+                    >
                 </div>
+
                 <div class="col-md-6 mb-3">
                     <label for="email" class="form-label">Email Address</label>
-                    <input type="email" class="form-control" id="email" value="admin@fashion.com" required>
+                    <input
+                        type="email"
+                        class="form-control"
+                        id="email"
+                        name="email"
+                        value="{{ old('email', $user['email'] ?? '') }}"
+                        required
+                    >
                 </div>
             </div>
+
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="role" class="form-label">Role</label>
-                    <select class="form-select" id="role" required>
+                    <select class="form-select" id="role" name="role" required>
                         <option value="" disabled>Choose role...</option>
-                        <option value="admin" selected>Admin</option> {{-- 'selected' akan dinamis --}}
-                        <option value="pos">POS</option>
-                        <option value="purchasing">Purchasing</option>
-                        <option value="inventory">Inventory</option>
+                        <option value="admin" {{ (old('role', $user['role'] ?? '') == 'admin') ? 'selected' : '' }}>Admin</option>
+                        <option value="kasir" {{ (old('role', $user['role'] ?? '') == 'kasir') ? 'selected' : '' }}>Kasir / POS</option>
                     </select>
                 </div>
             </div>
-            
+
             <hr class="my-4">
 
             {{-- Bagian Ganti Password --}}
@@ -47,13 +60,37 @@
             <div class="row mt-2">
                 <div class="col-md-6 mb-3">
                     <label for="password" class="form-label">New Password</label>
-                    <input type="password" class="form-control" id="password">
+                    <input
+                        type="password"
+                        class="form-control"
+                        id="password"
+                        name="password"
+                        autocomplete="new-password"
+                    >
                 </div>
+
                 <div class="col-md-6 mb-3">
                     <label for="password_confirmation" class="form-label">Confirm New Password</label>
-                    <input type="password" class="form-control" id="password_confirmation">
+                    <input
+                        type="password"
+                        class="form-control"
+                        id="password_confirmation"
+                        name="password_confirmation"
+                        autocomplete="new-password"
+                    >
                 </div>
             </div>
+
+            {{-- Tampilkan error validation jika ada --}}
+            @if($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach($errors->all() as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             <div class="d-flex justify-content-end mt-3">
                 <a href="{{ route('users.index') }}" class="btn btn-secondary me-2">Cancel</a>

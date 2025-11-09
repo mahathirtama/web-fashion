@@ -9,80 +9,84 @@
 
 <div class="card">
     <div class="card-body">
-        <form action="#" method="POST" enctype="multipart/form-data">
-            {{-- @csrf --}}
+        <form action="{{ route('inventory.store') }}" method="POST">
+            @csrf
+
             <div class="row">
-                {{-- Kolom Kiri --}}
+                {{-- KIRI --}}
                 <div class="col-md-8">
+
                     <div class="mb-3">
-                        <label for="product_name" class="form-label">Product Name</label>
-                        <input type="text" class="form-control" id="product_name" placeholder="e.g., T-Shirt Black" required>
+                        <label class="form-label">Product Name</label>
+                        <input type="text" name="name" class="form-control" required>
                     </div>
+
                     <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" rows="5" placeholder="Details about the product..."></textarea>
+                        <label class="form-label">Description</label>
+                        <textarea name="deskripsi" class="form-control" rows="5"></textarea>
                     </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="sale_price" class="form-label">Sale Price</label>
-                            <div class="input-group">
-                                <span class="input-group-text">Rp</span>
-                                <input type="number" class="form-control" id="sale_price" placeholder="150000">
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="purchase_cost" class="form-label">Purchase Cost</label>
-                            <div class="input-group">
-                                <span class="input-group-text">Rp</span>
-                                <input type="number" class="form-control" id="purchase_cost" placeholder="80000">
-                            </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" name="price" class="form-control" required>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="product_image" class="form-label">Product Image</label>
-                        <input class="form-control" type="file" id="product_image">
+                        <label class="form-label">Image URL</label>
+                        <input type="text" name="image" class="form-control" placeholder="https://example.com/image.jpg">
                     </div>
                 </div>
 
-                {{-- Kolom Kanan --}}
+                {{-- KANAN --}}
                 <div class="col-md-4">
+
                     <div class="mb-3">
-                        <label for="sku" class="form-label">SKU (Stock Keeping Unit)</label>
-                        <input type="text" class="form-control" id="sku" placeholder="e.g., TS-BLK-M" required>
+                        <label class="form-label">Kode Product</label>
+                        <input type="text" name="kode_product" class="form-control" placeholder="PRD001" required>
                     </div>
+
                     <div class="mb-3">
-                        <label for="category" class="form-label">Category</label>
-                        <select class="form-select" id="category">
-                            <option selected>Choose category...</option>
-                            <option>T-Shirts</option>
-                            <option>Jeans</option>
-                            <option>Hoodies</option>
-                            <option>Sneakers</option>
-                            <option>Accessories</option>
+                        <label class="form-label">Category</label>
+                        <select name="category" class="form-select">
+                            <option value="">Choose category...</option>
+                            <option value="T-Shirts">T-Shirts</option>
+                            <option value="Jeans">Jeans</option>
+                            <option value="Hoodies">Hoodies</option>
+                            <option value="Sneakers">Sneakers</option>
+                            <option value="Accessories">Accessories</option>
                         </select>
                     </div>
+
                     <div class="mb-3">
-                        <label for="supplier" class="form-label">Supplier</label>
-                        <select class="form-select" id="supplier">
-                            <option selected>Choose supplier...</option>
-                            <option>Supplier Garmentindo</option>
-                            <option>Supplier Bahan Kain</option>
+                        <label class="form-label">Supplier</label>
+                        <select name="supplier_id" class="form-select" required>
+                            <option value="">Choose supplier...</option>
+                            <option value="1">Supplier Garmentindo</option>
+                            <option value="2">Supplier Bahan Kain</option>
                         </select>
                     </div>
+
                     <div class="mb-3">
-                        <label for="stock" class="form-label">Initial Stock Quantity</label>
-                        <input type="number" class="form-control" id="stock" value="10">
+                        <label class="form-label">Initial Stock</label>
+                        <input type="number" name="stock" class="form-control" value="10" required>
                     </div>
+
+                    {{-- default status --}}
+                    <input type="hidden" name="status" value="active">
+
                 </div>
             </div>
 
             <hr>
+
             <div class="d-flex justify-content-end">
                 <a href="{{ route('inventory.index') }}" class="btn btn-secondary me-2">Cancel</a>
                 <button type="submit" class="btn btn-primary">Save Product</button>
             </div>
+
         </form>
     </div>
 </div>
