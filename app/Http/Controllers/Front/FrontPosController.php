@@ -15,44 +15,72 @@ class FrontPosController extends BaseController
 {
     use AuthorizesRequests, ValidatesRequests;
 
-    public function index() {
-        
-        $products = []; 
-        $kasir_id = Auth::id();
-        $apiError = null; // <- Variabel baru untuk menampung error
+     protected $backendApiUrl;
+    public function __construct()
+    {
+        $this->backendApiUrl = rtrim(env('BACKEND', 'http://127.0.0.1:8000/api'), '/');
 
-        try {
-            $backendApiUrl = rtrim(env('BACKEND', 'http://127.0.0.1:8000/api'), '/');
+    }
 
-            $response = Http::get($backendApiUrl . '/products');
-            
-            if ($response->successful()) {
-                $products = $response->json()['data'] ?? [];
-            } else {
-                // Jika API-nya error (misal: 404, 500)
-                $apiError = "Gagal mengambil data dari API: " . ($response->json()['message'] ?? $response->body());
-                Log::error('Gagal mengambil produk dari API', ['status' => $response->status(), 'body' => $response->body()]);
+ public function index()
+{
+  
+    $products = []; 
+    $kasir_id = session('user_id');
+    $apiError = null;
+
+    try {
+
+        $response = Http::get($this->backendApiUrl . '/products');
+        // dd($response->json());
+
+        if ($response->successful()) {
+
+            // ✅ Ambil data dari JSON field "data"
+            $products = $response->json() ?? [];
+            // dd($products);
+
+            // ✅ Base URL backend
+            $backendBaseUrl = rtrim(env('BACKEND', 'http://127.0.0.1:8000'), '/');
+
+            // ✅ Perbaiki data produk
+            foreach ($products as &$product) {
+
+                // Jika product adalah object, convert ke array
+                if (is_object($product)) {
+                    $product = (array) $product;
+                }
+
+                // ✅ Atur image URL
+                if (!empty($product['image'])) {
+                    $product['image_url'] = $backendBaseUrl . '/storage/' . $product['image'];
+                } else {
+                    $product['image_url'] = asset('images/no-image.png');
+                }
             }
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            // Jika servernya tidak bisa dihubungi (misal: cURL error 7)
-            $apiError = "Koneksi ke API Produk gagal: " . $e->getMessage();
-            Log::error('Error koneksi API Produk: ' . $apiError);
-        } catch (\Exception $e) {
-            // Error lainnya
-            $apiError = "Terjadi error: " . $e->getMessage();
-            Log::error('Error API Produk: ' . $apiError);
+            unset($product);
+
+        } else {
+            $apiError = "API error: " . ($response->json()['message'] ?? 'Unknown');
         }
 
-        return view("pos.index", [
-            'products' => (object) $products, 
-            'kasir_id' => $kasir_id,
-            'apiError' => $apiError // <- Kirim error ke view
-        ]);
+    } catch (\Exception $e) {
+        $apiError = "Error: " . $e->getMessage();
     }
+
+    return view("pos.index", [
+        'products' => $products,
+        'kasir_id' => $kasir_id,
+        'apiError' => $apiError
+    ]);
+}
+
+
 
     // Fungsi baru untuk process payment
     public function processPayment(Request $request)
     {
+    
         try {
             // 1. Dapatkan data dari frontend (cart, tax_rate)
             $cart = $request->input('cart', []);
@@ -69,14 +97,13 @@ class FrontPosController extends BaseController
 
             $payload = [
                 'tanggal' => now()->toDateString(), // Tanggal hari ini
-                'kasir_id' => Auth::id(), // Ambil ID kasir yang sedang login
+                'kasir_id' => session('user_id'),
                 'tax' => $taxRate,
                 'details' => $details,
             ];
 
             // 3. Panggil API Backend (SalesController)
-            $backendApiUrl = rtrim(env('BACKEND', 'http://127.0.0.1:8000/api'), '/');
-            $response = Http::post($backendApiUrl . '/sales', $payload);
+            $response = Http::post($this->backendApiUrl . '/sales', $payload);
 
             // 4. Teruskan respon dari API ke frontend
             if ($response->successful()) {

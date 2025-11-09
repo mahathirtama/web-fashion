@@ -88,16 +88,16 @@
             {{-- Loop data dari FrontPosController --}}
             @forelse ($products as $product)
                 <div class="col product-card-clickable" 
-                     data-product-id="{{ $product->id }}" 
-                     data-product-name="{{ addslashes($product->name) }}" 
-                     data-product-price="{{ $product->price }}">
+                     data-product-id="{{ $product['id'] }}" 
+                     data-product-name="{{ addslashes(string: $product['name']) }}" 
+                     data-product-price="{{ $product['price'] }}">
                     
                     <div class="card h-100 product-card">
                         {{-- Ganti placeholder dengan gambar produk jika ada --}}
-                        <img src="{{ $product->image_url ?? 'https://via.placeholder.com/150/808080/FFFFFF?text=Fashion' }}" class="card-img-top" alt="{{ $product->name }}">
+                        <img  height="200px" src="{{ $product['image'] ?? 'https://via.placeholder.com/150/808080/FFFFFF?text=Fashion' }}" class="card-img-top" alt="{{ $product['name'] }}">
                         <div class="card-body p-2">
-                            <h6 class="card-title mb-1">{{ $product->name }}</h6>
-                            <p class="card-text fw-bold">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
+                            <h6 class="card-title mb-1">{{ $product['name'] }}</h6>
+                            <p class="card-text fw-bold">Rp {{ number_format($product['price'], 0, ',', '.') }}</p>
                         </div>
                     </div>
                 </div>

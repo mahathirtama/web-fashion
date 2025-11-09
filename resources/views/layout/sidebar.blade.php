@@ -10,10 +10,12 @@
                   Request::is('/') akan aktif untuk root.
                   Request::is('dashboard*') akan aktif untuk /dashboard, /dashboard/stats, dll.
                 --}}
-                <a class="nav-link {{ (Request::is('/') || Request::is('dashboard*')) ? 'active' : '' }}" aria-current="page" href="{{ route('dashboard.index') }}">
-                    <i class="bi bi-speedometer2"></i>
+                <li class="nav-item">
+                <a class="nav-link {{ Request::is('reports*') ? 'active' : '' }}" href="{{ route('reports.index') }}">
+                    <i class="bi bi-pie-chart"></i>
                     Dashboard
                 </a>
+            </li>
             </li>
             <li class="nav-item">
                 {{-- Request::is('pos*') akan aktif untuk /pos, /pos/create, dll. --}}
@@ -40,12 +42,7 @@
                     Invoices
                 </a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link {{ Request::is('reports*') ? 'active' : '' }}" href="{{ route('reports.index') }}">
-                    <i class="bi bi-pie-chart"></i>
-                    Reports
-                </a>
-            </li>
+           
         
         </ul>
 

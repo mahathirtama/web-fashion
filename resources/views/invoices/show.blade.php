@@ -4,7 +4,6 @@
 
 @push('page-styles')
 <style>
-    /* Sembunyikan sidebar dan header saat mencetak */
     @media print {
         body {
             background-color: #fff;
@@ -28,8 +27,32 @@
 @endpush
 
 @section('content')
+@php
+    $invNumber = 'INV-' . str_pad($invoice['id'], 3, '0', STR_PAD_LEFT);
+    $date = $invoice['tanggal'];
+
+    // Due date = 7 hari dari tanggal
+    $dueDate = \Carbon\Carbon::parse($date)->addDays(7)->format('Y-m-d');
+
+    // Status otomatis
+    $status = 'Paid';
+    $statusClass = 'bg-success';
+
+    // contoh rule:
+    // kalau belum lewat due-date → Pending
+    // kalau lewat → Overdue
+    // kamu bisa custom lagi
+    if (now()->lt($dueDate)) {
+        $status = 'Pending';
+        $statusClass = 'bg-warning text-dark';
+    } else {
+        $status = 'Overdue';
+        $statusClass = 'bg-danger';
+    }
+@endphp
+
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Invoice #INV-002</h1>
+    <h1 class="h2">Invoice #{{ $invNumber }}</h1>
     <div class="btn-toolbar mb-2 mb-md-0 print-button-container">
         <button class="btn btn-sm btn-secondary" onclick="window.print()">
             <i class="bi bi-printer"></i>
@@ -40,7 +63,8 @@
 
 <div class="card invoice-card">
     <div class="card-body p-4 p-md-5">
-        {{-- Header Invoice --}}
+
+        {{-- Header --}}
         <div class="row mb-4">
             <div class="col-6">
                 <h3 class="mb-0">FASHION ADMIN</h3>
@@ -48,23 +72,25 @@
             </div>
             <div class="col-6 text-end">
                 <h2 class="mb-0 text-uppercase">Invoice</h2>
-                <p class="mb-0"><span class="fw-bold">Invoice #:</span> INV-002</p>
-                <p class="mb-0"><span class="fw-bold">Date:</span> 2025-10-08</p>
+                <p class="mb-0"><span class="fw-bold">Invoice #:</span> {{ $invNumber }}</p>
+                <p class="mb-0"><span class="fw-bold">Date:</span> {{ $date }}</p>
             </div>
         </div>
 
-        {{-- Info Customer & Perusahaan --}}
+        {{-- Customer Info --}}
         <div class="row border-top pt-4 mb-4">
             <div class="col-6">
                 <h5 class="mb-2">Bill To:</h5>
-                <p class="mb-0"><strong>Citra Lestari</strong></p>
-                <p class="mb-0">Jl. Pelanggan No. 456</p>
-                <p class="mb-0">Bandung, Indonesia</p>
+                {{-- Placeholder karena belum ada customer --}}
+                <p class="mb-0"><strong>Pelanggan Umum</strong></p>
+                <p class="mb-0">-</p>
+                <p class="mb-0">-</p>
             </div>
+
             <div class="col-6 text-end">
                 <h5 class="mb-2">Payment Details:</h5>
-                <p class="mb-0"><strong>Status:</strong> <span class="badge bg-warning text-dark">Pending</span></p>
-                <p class="mb-0"><strong>Due Date:</strong> 2025-10-15</p>
+                <p class="mb-0"><strong>Status:</strong> <span class="badge {{ $statusClass }}">{{ $status }}</span></p>
+                <p class="mb-0"><strong>Due Date:</strong> {{ $dueDate }}</p>
             </div>
         </div>
 
@@ -80,47 +106,43 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Baju (32)</td>
-                        <td class="text-end">1</td>
-                        <td class="text-end">Rp 450.000</td>
-                        <td class="text-end">Rp 450.000</td>
-                    </tr>
-                    <tr>
-                        <td>Jeans Blue (32)</td>
-                        <td class="text-end">1</td>
-                        <td class="text-end">Rp 450.000</td>
-                        <td class="text-end">Rp 450.000</td>
-                    </tr>
-                    <tr>
-                        <td>Celana (32)</td>
-                        <td class="text-end">1</td>
-                        <td class="text-end">Rp 450.000</td>
-                        <td class="text-end">Rp 450.000</td>
-                    </tr>
+                    @foreach ($invoice['details'] as $d)
+                        <tr>
+                            <td>{{ $d['product']['name'] }}</td>
+                            <td class="text-end">{{ $d['quantity'] }}</td>
+                            <td class="text-end">Rp {{ number_format($d['product']['price'], 0, ',', '.') }}</td>
+                            <td class="text-end">Rp {{ number_format($d['subtotal'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
                 </tbody>
             </table>
         </div>
 
-        {{-- Kalkulasi Total --}}
+        {{-- Kalkulasi --}}
         <div class="row">
             <div class="col-6">
                 <p class="fw-bold">Notes:</p>
                 <small>Thank you for your business!</small>
             </div>
+
             <div class="col-6">
                 <div class="d-flex justify-content-between">
                     <span class="fw-bold">Subtotal:</span>
-                    <span>Rp 1.350.000</span>
+                    <span>Rp {{ number_format($invoice['subtotal'], 0, ',', '.') }}</span>
                 </div>
+
                 <div class="d-flex justify-content-between">
-                    <span class="fw-bold">Tax (11%):</span>
-                    <span>Rp 148.500</span>
+                    <span class="fw-bold">Tax ({{ $invoice['tax'] }}%):</span>
+                    <span>
+                        Rp {{ number_format(($invoice['subtotal'] * $invoice['tax']) / 100, 0, ',', '.') }}
+                    </span>
                 </div>
+
                 <hr>
+
                 <div class="d-flex justify-content-between fs-4">
                     <span class="fw-bold">TOTAL:</span>
-                    <span class="fw-bold">Rp 1201.500</span>
+                    <span class="fw-bold">Rp {{ number_format($invoice['total'], 0, ',', '.') }}</span>
                 </div>
             </div>
         </div>
