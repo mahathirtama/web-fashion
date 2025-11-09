@@ -2,10 +2,13 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductSellController;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,10 +26,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 // === ROUTES UNTUK LOGIN ===
-Route::post('/login', [App\Http\Controllers\AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login']);
 
 // === ROUTES UNTUK REPORT ===
-Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index']);
+Route::get('/reports', [ReportController::class, 'index']);
 
 // === ROUTES UNTUK USER ===
 Route::get('/users', [UserController::class, 'index']);
@@ -35,7 +38,10 @@ Route::post('/users', [UserController::class, 'store']);
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-// === ROUTES UNTUK PRODUCTS ===
+// === ROUTES UNTUK PRODUCTS IN SELL===
+Route::get('/products/sell', [ProductSellController::class, 'index']);
+
+// === ROUTES UNTUK PRODUCTS IN INVENTORY===
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::post('/products', [ProductController::class, 'store']);

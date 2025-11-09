@@ -44,37 +44,40 @@ class DatabaseSeeder extends Seeder
 
         // 👕 PRODUCTS
         $product1 = Product::create([
-            'kode_product' => 'PRD001',
+            'code_product' => 'PRD001',
             'name' => 'T-Shirt Black',
             'category' => 'T-Shirts',
             'status' => 'active',
-            'deskripsi' => 'Kaos hitam polos ukuran all size',
+            'description' => 'Kaos hitam polos ukuran all size',
             'stock' => 100,
-            'price' => 150000,
+            'purchase_price' => 100000,
+            'selling_price' => 150000,
             'image' => 'tshirt_black.jpg',
             'supplier_id' => $supplier1->id,
         ]);
 
         $product2 = Product::create([
-            'kode_product' => 'PRD002',
+            'code_product' => 'PRD002',
             'name' => 'Jeans Blue',
             'category' => 'Jeans',
             'status' => 'active',
-            'deskripsi' => 'Celana jeans warna biru',
+            'description' => 'Celana jeans warna biru',
             'stock' => 50,
-            'price' => 450000,
+            'purchase_price' => 400000,
+            'selling_price' => 450000,
             'image' => 'jeans_blue.jpg',
             'supplier_id' => $supplier2->id,
         ]);
 
         $product3 = Product::create([
-            'kode_product' => 'PRD003',
+            'code_product' => 'PRD003',
             'name' => 'Sneakers White',
             'category' => 'Sneakers',
             'status' => 'active',
-            'deskripsi' => 'Sepatu sneakers putih unisex',
+            'description' => 'Sepatu sneakers putih unisex',
             'stock' => 30,
-            'price' => 750000,
+            'purchase_price' => 700000,
+            'selling_price' => 750000,
             'image' => 'sneakers_white.jpg',
             'supplier_id' => $supplier1->id,
         ]);

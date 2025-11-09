@@ -8,13 +8,14 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->string('kode_product')->unique(); // kode unik produk
+            $table->string('code_product')->unique(); // kode unik produk
             $table->string('name'); // nama produk
             $table->string('category')->nullable(); // kategori
             $table->string('status')->default('active'); // active / inactive
-            $table->text('deskripsi')->nullable(); // deskripsi produk
+            $table->text('description')->nullable(); // deskripsi produk
             $table->integer('stock')->default(0); // stok
-            $table->decimal('price', 12, 2); // harga
+            $table->decimal('purchase_price', 12, 2); // harga beli
+            $table->decimal('selling_price', 12, 2); // harga jual
             $table->string('image')->nullable(); // nama file / URL gambar
             $table->foreignId('supplier_id')->constrained('suppliers')->onDelete('cascade'); // relasi ke supplier
             $table->timestamps(); // created_at & updated_at
