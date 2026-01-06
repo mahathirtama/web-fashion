@@ -76,13 +76,14 @@ class FrontInventoryController extends Controller
 
     try {
         $validated = $request->validate([
-            'kode_product' => 'required|string|max:50',
+            'code_product' => 'required|string|max:50',
             'name'         => 'required|string|max:255',
             'category'     => 'nullable|string|max:100',
             'deskripsi'    => 'nullable|string',
             'status'       => 'nullable|in:active,inactive',
             'stock'        => 'required|integer|min:0',
-            'price'        => 'required|numeric|min:0',
+            'selling_price'        => 'required|numeric|min:0',
+            'purchase_price'        => 'required|numeric|min:0',
             'supplier_id'  => 'required|integer',
             'image'        => 'nullable|string|max:255', // ✅ string, no upload
         ]);
@@ -128,10 +129,11 @@ class FrontInventoryController extends Controller
     public function update(Request $request, $id)
     {
         $payload = [
-            'kode_product' => $request->kode_product,
+            'code_product' => $request->code_product,
             'name' => $request->name,
-            'deskripsi' => $request->deskripsi,
-            'price' => $request->price,
+            'description' => $request->description,
+            'selling_price' => $request->selling_price,
+            'purhcase_price' => $request->purhcase_price,
             'category' => $request->category,
             'stock' => $request->stock,
             'image' => $request->image,

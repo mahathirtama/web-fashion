@@ -23,14 +23,21 @@
 
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-                        <textarea name="deskripsi" class="form-control" rows="5"></textarea>
+                        <textarea name="description" class="form-control" rows="5"></textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Price</label>
+                        <label class="form-label">Price Selling</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
-                            <input type="number" name="price" class="form-control" required>
+                            <input type="number" name="selling_price" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Price Purchasing</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" name="purchase_price" class="form-control" required>
                         </div>
                     </div>
 
@@ -45,7 +52,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">Kode Product</label>
-                        <input type="text" name="kode_product" class="form-control" placeholder="PRD001" required>
+                        <input type="text" name="code_product" class="form-control" placeholder="PRD001" required>
                     </div>
 
                     <div class="mb-3">

@@ -110,7 +110,7 @@
                         <tr>
                             <td>{{ $d['product']['name'] }}</td>
                             <td class="text-end">{{ $d['quantity'] }}</td>
-                            <td class="text-end">Rp {{ number_format($d['product']['price'], 0, ',', '.') }}</td>
+                            <td class="text-end">Rp {{ number_format($d['product']['selling_price'], 0, ',', '.') }}</td>
                             <td class="text-end">Rp {{ number_format($d['subtotal'], 0, ',', '.') }}</td>
                         </tr>
                     @endforeach

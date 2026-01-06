@@ -25,15 +25,23 @@
 
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-                        <textarea name="deskripsi" class="form-control" rows="5">{{ $product['deskripsi'] }}</textarea>
+                        <textarea name="description" class="form-control" rows="5">{{ $product['description'] }}</textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Price</label>
+                        <label class="form-label">Selling Price</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
-                            <input type="number" name="price" class="form-control"
-                                   value="{{ $product['price'] }}" required>
+                            <input type="number" name="selling_price" class="form-control"
+                                   value="{{ $product['selling_price'] }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Purchase Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" name="purchase_price" class="form-control"
+                                   value="{{ $product['purchase_price'] }}" required>
                         </div>
                     </div>
 
@@ -50,8 +58,8 @@
 
                     <div class="mb-3">
                         <label class="form-label">Kode Product</label>
-                        <input type="text" name="kode_product" class="form-control"
-                               value="{{ $product['kode_product'] }}" required>
+                        <input type="text" name="code_product" class="form-control"
+                               value="{{ $product['code_product'] }}" required>
                     </div>
 
                     <div class="mb-3">
