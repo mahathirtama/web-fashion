@@ -41,11 +41,11 @@ class SalesController extends Controller
 
         foreach ($validated['details'] as $item) {
             $product = Product::findOrFail($item['product_id']);
-            $itemSubtotal = $product->price * $item['quantity']; // 💡 hitung otomatis
+            $itemSubtotal = $product->selling_y * $item['quantity']; // 💡 hitung otomatis
             $subtotal += $itemSubtotal;
 
             $detailsData[] = [
-                'product_id' => $product->id,
+                'product_id' => $product->idy,
                 'quantity' => $item['quantity'],
                 'subtotal' => $itemSubtotal,
             ];

@@ -31,17 +31,14 @@ class FrontPosController extends BaseController
 
     try {
 
-        $response = Http::get($this->backendApiUrl . '/products');
+        $response = Http::get($this->backendApiUrl . '/products/sell');
         // dd($response->json());
 
         if ($response->successful()) {
 
             // ✅ Ambil data dari JSON field "data"
-            $products = $response->json() ?? [];
-            // dd($products);
-
-            // ✅ Base URL backend
-            $backendBaseUrl = rtrim(env('BACKEND', 'http://127.0.0.1:8000'), '/');
+            $products = $response->json('data') ?? [];
+    
 
             // ✅ Perbaiki data produk
             foreach ($products as &$product) {
@@ -50,12 +47,14 @@ class FrontPosController extends BaseController
                 if (is_object($product)) {
                     $product = (array) $product;
                 }
+                // dd($product);
+            
 
                 // ✅ Atur image URL
                 if (!empty($product['image'])) {
-                    $product['image_url'] = $backendBaseUrl . '/storage/' . $product['image'];
+                    $product['image'] = $product['image'];
                 } else {
-                    $product['image_url'] = asset('images/no-image.png');
+                    $product['image'] = asset('images/no-image.png');
                 }
             }
             unset($product);

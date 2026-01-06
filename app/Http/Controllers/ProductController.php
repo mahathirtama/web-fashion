@@ -15,13 +15,14 @@ class ProductController extends Controller
 
     public function store(Request $request){
     $validated = $request->validate([
-        'kode_product' => 'required|string|max:50|unique:products',
+        'code_product' => 'required|string|max:50|unique:products',
         'name' => 'required|string|max:255',
         'category' => 'nullable|string|max:100',
         'status' => 'nullable|in:active,inactive',
-        'deskripsi' => 'nullable|string',
+        'description' => 'nullable|string',
         'stock' => 'required|integer|min:0',
-        'price' => 'required|numeric|min:0',
+        'selling_price' => 'required|numeric|min:0',
+        'purchase_price' => 'required|numeric|min:0',
         'image' => 'nullable|string|max:255',
         'supplier_id' => 'required|exists:suppliers,id',
     ]);
@@ -45,13 +46,14 @@ class ProductController extends Controller
     $product = Product::findOrFail($id);
 
     $validated = $request->validate([
-        'kode_product' => 'sometimes|string|max:50|unique:products,kode_product,' . $id,
+        'code_product' => 'sometimes|string|max:50|unique:products,code_product,' . $id,
         'name' => 'sometimes|string|max:255',
         'category' => 'sometimes|string|max:100',
         'status' => 'sometimes|in:active,inactive',
-        'deskripsi' => 'sometimes|string',
+        'description' => 'sometimes|string',
         'stock' => 'sometimes|integer|min:0',
-        'price' => 'sometimes|numeric|min:0',
+        'selling_price' => 'sometimes|numeric|min:0',
+        'purchase_price' => 'sometimes|numeric|min:0',
         'image' => 'sometimes|string|max:255',
         'supplier_id' => 'sometimes|exists:suppliers,id',
     ]);

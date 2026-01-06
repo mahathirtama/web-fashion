@@ -46,7 +46,8 @@
                             <th scope="col">SKU</th>
                             <th scope="col">Product</th>
                             <th scope="col">Category</th>
-                            <th scope="col">Price</th>
+                            <th scope="col">Selling Price</th>
+                            <th scope="col">Purchase Price</th>
                             <th scope="col">Stock on Hand</th>
                             <th scope="col">Status</th>
                             <th scope="col">Actions</th>
@@ -55,13 +56,14 @@
                     <tbody>
                         @foreach ($products as $p)
                             <tr>
-                                <td>{{ $p['kode_product'] }}</td>
+                                <td>{{ $p['code_product'] }}</td>
                                 <td>
                                     <img src="{{ $p['image'] }}" width="40" class="me-2">
                                     {{ $p['name'] }}
                                 </td>
                                 <td>{{ $p['category'] }}</td>
-                                <td>Rp {{ number_format($p['price'], 0, ',', '.') }}</td>
+                                <td>Rp {{ number_format($p['selling_price'], 0, ',', '.') }}</td>
+                                <td>Rp {{ number_format($p['purchase_price'], 0, ',', '.') }}</td>
                                 <td>{{ $p['stock'] }}</td>
                                 <td>
                                     @if ($p['status'] === 'active')
