@@ -78,60 +78,64 @@ class FrontPosController extends BaseController
 
     // Fungsi baru untuk process payment
     public function processPayment(Request $request)
-    {
-    
-        try {
-            // 1. Dapatkan data dari frontend (cart, tax_rate)
-            $cart = $request->input('cart', []);
-            $taxRate = $request->input('tax_rate', 0.11) * 100; // Ubah 0.11 jadi 11
+{
+    try {
+        // 1. Validasi input dari Frontend dulu agar tidak error
+        // Pastikan cart dikirim dan formatnya array
+        $request->validate([
+            'cart' => 'required|array',
+            'cart.*.product_id' => 'required', // Pastikan setiap item punya product_id
+            'cart.*.quantity' => 'required|numeric',
+        ]);
 
-            // 2. Siapkan data untuk dikirim ke API Backend
-            $details = [];
-            foreach ($cart as $productId => $item) {
-                $details[] = [
-                    'product_id' => $productId,
-                    'quantity' => $item['quantity'],
-                ];
-            }
+        $cart = $request->input('cart', []);
+        
+        // Logika Pajak: Jika dikirim 0.11 jadi 11, jika dikirim 11 tetap 11
+        $rawTax = $request->input('tax_rate', 0.11);
+        $taxRate = ($rawTax <= 1) ? $rawTax * 100 : $rawTax;
 
-            $payload = [
-                'tanggal' => now()->toDateString(), // Tanggal hari ini
-                'kasir_id' => session('user_id'),
-                'tax' => $taxRate,
-                'details' => $details,
+        // 2. Siapkan data (FIX LOOPING DI SINI)
+        $details = [];
+        foreach ($cart as $item) {
+            $details[] = [
+                // AMBIL DARI VALUE ITEM, JANGAN DARI KEY
+                'product_id' => $item['product_id'], 
+                'quantity'   => $item['quantity'],
             ];
-
-            // 3. Panggil API Backend (SalesController)
-            $response = Http::post($this->backendApiUrl . '/sales', $payload);
-
-            // 4. Teruskan respon dari API ke frontend
-            if ($response->successful()) {
-                return $response->json();
-            } else {
-                // Jika API gagal, kirim error
-                return response()->json([
-                    'status' => $response->status(),
-                    'message' => 'API Error: ' . ($response->json()['message'] ?? 'Failed to process sale'),
-                    'errors' => $response->json()['errors'] ?? null
-                ], $response->status());
-            }
-
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            // Tangani error koneksi (seperti yang Anda alami)
-            Log::error('Koneksi ke API sales gagal: ' . $e->getMessage());
-            return response()->json([
-                'status' => 500,
-                'message' => 'Error connecting to API service: ' . $e->getMessage()
-            ], 500);
-
-        } catch (\Exception $e) {
-            // Tangani error umum lainnya
-            Log::error('Gagal memproses pembayaran: ' . $e->getMessage());
-            return response()->json([
-                'status' => 500,
-                'message' => 'An unexpected error occurred: ' . $e->getMessage()
-            ], 500);
         }
+
+        // Cek Session (Pastikan user login atau kirim ID via request)
+        $kasirId = session('user_id'); 
+        if (!$kasirId) {
+             return response()->json(['status' => 401, 'message' => 'Unauthorized: Session user tidak ditemukan'], 401);
+        }
+
+        $payload = [
+            'tanggal'  => now()->toDateString(),
+            'kasir_id' => $kasirId,
+            'tax'      => $taxRate,
+            'details'  => $details,
+        ];
+
+        // 3. Panggil API Backend
+        $response = Http::withHeaders(['Accept' => 'application/json'])
+                        ->post($this->backendApiUrl . '/sales', $payload);
+
+        // 4. Return response
+        if ($response->successful()) {
+            return $response->json();
+        } else {
+            return response()->json([
+                'status'  => $response->status(),
+                'message' => 'Backend Error: ' . ($response->json()['message'] ?? 'Unknown Error'),
+                'errors'  => $response->json()['errors'] ?? null
+            ], $response->status());
+        }
+
+    } catch (\Exception $e) {
+        Log::error('Process Payment Error: ' . $e->getMessage());
+        return response()->json(['status' => 500, 'message' => $e->getMessage()], 500);
     }
+}
 }
 

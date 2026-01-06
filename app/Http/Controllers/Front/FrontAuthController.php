@@ -51,7 +51,7 @@ class FrontAuthController extends Controller
 
 
 
-        return redirect()->intended(route('dashboard.index'));
+        return redirect()->intended(route('reports.index'));
     }
 
 

@@ -20,41 +20,48 @@ class SalesController extends Controller
         ]);
     }
 
-    public function store(Request $request)
-    {
-        // ✅ 1. Validasi input dasar (tanpa subtotal)
-        $validated = $request->validate([
-            'tanggal' => 'required|date',
-            'kasir_id' => 'required|exists:users,id',
-            'tax' => 'nullable|numeric|min:0',
-            'details' => 'required|array|min:1',
-            'details.*.product_id' => 'required|exists:products,id',
-            'details.*.quantity' => 'required|integer|min:1',
-        ]);
+   public function store(Request $request)
+{
+    // 1. Validasi input
+    $validated = $request->validate([
+        'tanggal' => 'required|date',
+        'kasir_id' => 'required|exists:users,id',
+        'tax' => 'nullable|numeric|min:0',
+        'details' => 'required|array|min:1',
+        'details.*.product_id' => 'required|exists:products,id',
+        'details.*.quantity' => 'required|integer|min:1',
+    ]);
 
-        // Default pajak 11% kalau tidak dikirim
-        $taxRate = $validated['tax'] ?? 11;
+    $taxRate = $validated['tax'] ?? 11;
 
-        // ✅ 2. Hitung subtotal otomatis
-        $subtotal = 0;
-        $detailsData = [];
+    // 2. Hitung subtotal & Siapkan Data
+    $subtotal = 0;
+    $detailsData = [];
 
-        foreach ($validated['details'] as $item) {
-            $product = Product::findOrFail($item['product_id']);
-            $itemSubtotal = $product->selling_y * $item['quantity']; // 💡 hitung otomatis
-            $subtotal += $itemSubtotal;
+    foreach ($validated['details'] as $item) {
+        $product = Product::findOrFail($item['product_id']);
+        
+  
+        $harga = $product->selling_price; 
+        
+        $itemSubtotal = $harga * $item['quantity'];
+        $subtotal += $itemSubtotal;
 
-            $detailsData[] = [
-                'product_id' => $product->idy,
-                'quantity' => $item['quantity'],
-                'subtotal' => $itemSubtotal,
-            ];
-        }
+        $detailsData[] = [
+            'product_id' => $product->id, // Ganti 'idy' jadi 'id'
+            'quantity' => $item['quantity'],
+            'subtotal' => $itemSubtotal,
+        ];
+    }
 
-        // ✅ 3. Hitung total setelah pajak
-        $total = $subtotal + ($subtotal * $taxRate / 100);
+    // 3. Hitung total
+    $total = $subtotal + ($subtotal * $taxRate / 100);
 
-        // ✅ 4. Simpan ke tabel `sales`
+    // 4. Gunakan Database Transaction agar aman
+    // (Jika insert detail gagal, header sales juga ikut dibatalkan)
+    return \DB::transaction(function () use ($validated, $subtotal, $taxRate, $total, $detailsData) {
+        
+        // Simpan Header
         $sales = Sales::create([
             'tanggal' => $validated['tanggal'],
             'kasir_id' => $validated['kasir_id'],
@@ -63,23 +70,23 @@ class SalesController extends Controller
             'total' => $total,
         ]);
 
-        // ✅ 5. Simpan detail transaksi
+        // Simpan Detail
         foreach ($detailsData as $detail) {
             SalesDetail::create([
                 'sale_id' => $sales->id,
-                'product_id' => $detail['product_id'],
+                'product_id' => $detail['product_id'], // Sekarang ini pasti ada isinya (tidak null)
                 'quantity' => $detail['quantity'],
                 'subtotal' => $detail['subtotal'],
             ]);
         }
 
-        // ✅ 6. Kembalikan response JSON
         return response()->json([
             'status' => 201,
             'message' => 'Sale created successfully',
-            'data' => $sales->load('details.product')
+            'data' => $sales->load('details.product') // Pastikan relasi di model Sales bernama 'details'
         ]);
-    }
+    });
+}
 
     public function show($id)
     {

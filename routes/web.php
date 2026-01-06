@@ -29,7 +29,7 @@ Route::get('/login', function () {
 Route::post('/login', [FrontAuthController::class, 'login'])->middleware('guest');
 
 
-Route::post('/logout', [FrontAuthController::class, 'logout'])->middleware('frontauth')->name('logout');
+Route::get('/logout', [FrontAuthController::class, 'logout'])->middleware('frontauth')->name('logout');
 
 
 Route::middleware('frontauth')->group(function () {
