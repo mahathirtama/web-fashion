@@ -89,7 +89,7 @@
 
             <div class="col-6 text-end">
                 <h5 class="mb-2">Payment Details:</h5>
-                <p class="mb-0"><strong>Status:</strong> <span class="badge {{ $statusClass }}">{{ $status }}</span></p>
+                <p class="mb-0"><strong>Status:</strong> <span class="badge bg-success">Paid</span></p>
                 <p class="mb-0"><strong>Due Date:</strong> {{ $dueDate }}</p>
             </div>
         </div>

@@ -264,14 +264,24 @@
         const paymentButton = $('#payment-button');
         
         if (Object.keys(cart).length === 0) {
-            showAlert('Cart is empty!', 'warning'); // <-- Ganti alert()
+            showAlert('Cart is empty!', 'warning');
             return;
         }
 
+        // --- PERBAIKAN DI SINI ---
+        // Kita ubah format cart dari Object ke Array agar Backend bisa membacanya
+        const cartArray = Object.keys(cart).map(key => {
+            return {
+                product_id: key,          // Ambil ID dari Key (misal: "10")
+                quantity: cart[key].quantity // Ambil quantity
+            };
+        });
+
         const payload = {
-            cart: cart, 
+            cart: cartArray, // Kirim array yang sudah diformat
             tax_rate: TAX_RATE 
         };
+        // -------------------------
 
         paymentButton.prop('disabled', true).text('Processing...');
 
@@ -289,18 +299,25 @@
             const result = await response.json();
 
             if (response.ok) { 
-                showAlert(result.message, 'success'); // <-- Ganti alert()
+                showAlert(result.message, 'success');
                 cart = {}; 
                 updateCart();
             } else {
-                // Tampilkan error validasi atau server error dari API
-                showAlert('Error: ' + (result.message || 'Failed to process payment.'), 'danger'); // <-- Ganti alert()
+                // Tampilkan pesan error spesifik jika ada
+                let errorMessage = result.message || 'Failed to process payment.';
+                
+                // Jika ada detail error validasi (misal stok kurang)
+                if (result.errors) {
+                    errorMessage += ' ' + JSON.stringify(result.errors);
+                }
+
+                showAlert('Error: ' + errorMessage, 'danger');
                 console.error(result);
             }
 
         } catch (error) {
             console.error('Fetch Error:', error);
-            showAlert('An unexpected error occurred. Please check console.', 'danger'); // <-- Ganti alert()
+            showAlert('An unexpected error occurred. Please check console.', 'danger');
         } finally {
             paymentButton.prop('disabled', false).text('Process Payment');
         }
