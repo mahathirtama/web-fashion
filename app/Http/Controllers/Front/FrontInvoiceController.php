@@ -4,20 +4,28 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+// use Illuminate\Support\Facades\Http; // Tidak dipakai lagi
 
 class FrontInvoiceController extends Controller
 {
-    protected $backendApiUrl;
-    protected $backendBaseUrl;
-
-    public function __construct()
+    // Helper function untuk Internal Request (Sama seperti di Inventory)
+    private function internalApiCall($method, $uri, $data = [])
     {
-        // API: http://127.0.0.1:8000/api
-        $this->backendApiUrl = rtrim(env('BACKEND', 'http://127.0.0.1:8000/api'), '/');
+        // 1. Buat Request Bohongan
+        $request = Request::create($uri, $method, $data);
+        
+        // 2. Set Header agar dianggap JSON Request
+        $request->headers->set('Accept', 'application/json');
 
-        // Base URL: http://127.0.0.1:8000
-        $this->backendBaseUrl = preg_replace('#/api$#', '', $this->backendApiUrl);
+        // 3. Eksekusi di dalam memori
+        $response = app()->handle($request);
+
+        // 4. Return object sederhana
+        return (object) [
+            'status' => $response->getStatusCode(),
+            'body' => json_decode($response->getContent(), true),
+            'successful' => $response->getStatusCode() >= 200 && $response->getStatusCode() < 300,
+        ];
     }
 
     // ============================================================
@@ -28,10 +36,12 @@ class FrontInvoiceController extends Controller
         $invoices = [];
 
         try {
-            $response = Http::get($this->backendApiUrl . '/sales');
+            // Ubah Http::get menjadi internal call ke /api/sales
+            $response = $this->internalApiCall('GET', '/api/sales');
 
-            if ($response->successful()) {
-                $invoices = $response->json('data');
+            if ($response->successful) {
+                // Ambil key 'data' dari response body
+                $invoices = $response->body['data'] ?? [];
             }
 
         } catch (\Exception $e) {
@@ -49,10 +59,11 @@ class FrontInvoiceController extends Controller
         $invoice = null;
 
         try {
-            $response = Http::get($this->backendApiUrl . "/sales/{$id}");
+            // Ubah Http::get menjadi internal call ke /api/sales/{id}
+            $response = $this->internalApiCall('GET', "/api/sales/{$id}");
 
-            if ($response->successful()) {
-                $invoice = $response->json('data');
+            if ($response->successful) {
+                $invoice = $response->body['data'] ?? null;
             } else {
                 return back()->with('error', 'Invoice not found');
             }
@@ -70,9 +81,10 @@ class FrontInvoiceController extends Controller
     public function destroy($id)
     {
         try {
-            $response = Http::delete($this->backendApiUrl . "/sales/{$id}");
+            // Ubah Http::delete menjadi internal call DELETE
+            $response = $this->internalApiCall('DELETE', "/api/sales/{$id}");
 
-            if ($response->successful()) {
+            if ($response->successful) {
                 return redirect()
                     ->route('invoices.index')
                     ->with('success', 'Invoice deleted successfully');

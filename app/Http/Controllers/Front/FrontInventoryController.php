@@ -4,20 +4,30 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+// use Illuminate\Support\Facades\Http; // Tidak dipakai lagi
 
 class FrontInventoryController extends Controller
 {
-    protected $backendApiUrl;
-    protected $backendBaseUrl;
-
-    public function __construct()
+    // Helper function agar kita tidak nulis ulang logika internal request berkali-kali
+    private function internalApiCall($method, $uri, $data = [])
     {
-        // http://127.0.0.1:8000/api
-        $this->backendApiUrl = rtrim(env('BACKEND', 'http://127.0.0.1:8000/api'), '/');
+        // 1. Buat Request Bohongan
+        // Parameter ke-3 adalah data (untuk POST/PUT)
+        $request = Request::create($uri, $method, $data);
+        
+        // 2. Set Header agar dianggap JSON Request
+        $request->headers->set('Accept', 'application/json');
 
-        // http://127.0.0.1:8000
-        $this->backendBaseUrl = preg_replace('#/api$#', '', $this->backendApiUrl);
+        // 3. Eksekusi di dalam memori
+        $response = app()->handle($request);
+
+        // 4. Return object sederhana berisi status & data
+        return (object) [
+            'status' => $response->getStatusCode(),
+            'body' => json_decode($response->getContent(), true),
+            'successful' => $response->getStatusCode() >= 200 && $response->getStatusCode() < 300,
+            'raw_response' => $response->getContent() // Jaga-jaga buat debug
+        ];
     }
 
     public function index()
@@ -26,15 +36,13 @@ class FrontInventoryController extends Controller
         $apiError = null;
 
         try {
-            // ✅ GET API /products
-            $response = Http::get($this->backendApiUrl . '/products');
+            // ✅ GET API /products (Internal Call)
+            $response = $this->internalApiCall('GET', '/api/products');
 
-            if ($response->successful()) {
+            if ($response->successful) {
 
-                // Backend kamu: return langsung array produk
-                // BUKAN: {status, data: [...]}
-                // Jadi langsung ambil response json
-                $products = $response->json() ?? [];
+                // Ambil data body
+                $products = $response->body ?? [];
 
                 // ✅ Convert object → array + generate image_url
                 foreach ($products as &$product) {
@@ -44,9 +52,10 @@ class FrontInventoryController extends Controller
                         $product = (array) $product;
                     }
 
-                    // ✅ Buat URL gambar
+                    // ✅ Buat URL gambar menggunakan asset() lokal
                     if (!empty($product['image'])) {
-                        $product['image_url'] = $this->backendBaseUrl . '/storage/' . $product['image'];
+                        // asset() otomatis menunjuk ke public folder domain kamu saat ini
+                        $product['image_url'] = asset('storage/' . $product['image']);
                     } else {
                         $product['image_url'] = asset('images/no-image.png');
                     }
@@ -54,7 +63,7 @@ class FrontInventoryController extends Controller
                 unset($product);
 
             } else {
-                $apiError = "API Error: " . ($response->json()['message'] ?? $response->status());
+                $apiError = "API Error: " . ($response->body['message'] ?? $response->status);
             }
 
         } catch (\Exception $e) {
@@ -66,53 +75,56 @@ class FrontInventoryController extends Controller
             'apiError' => $apiError
         ]);
     }
+
     public function create()
-{
-    return view('inventory.create');
-}
+    {
+        return view('inventory.create');
+    }
 
     public function store(Request $request)
-{
+    {
+        try {
+            $validated = $request->validate([
+                'code_product' => 'required|string|max:50',
+                'name'         => 'required|string|max:255',
+                'category'     => 'nullable|string|max:100',
+                'deskripsi'    => 'nullable|string',
+                'status'       => 'nullable|in:active,inactive',
+                'stock'        => 'required|integer|min:0',
+                'selling_price'        => 'required|numeric|min:0',
+                'purchase_price'        => 'required|numeric|min:0',
+                'supplier_id'  => 'required|integer',
+                'image'        => 'nullable|string|max:255',
+            ]);
 
-    try {
-        $validated = $request->validate([
-            'code_product' => 'required|string|max:50',
-            'name'         => 'required|string|max:255',
-            'category'     => 'nullable|string|max:100',
-            'deskripsi'    => 'nullable|string',
-            'status'       => 'nullable|in:active,inactive',
-            'stock'        => 'required|integer|min:0',
-            'selling_price'        => 'required|numeric|min:0',
-            'purchase_price'        => 'required|numeric|min:0',
-            'supplier_id'  => 'required|integer',
-            'image'        => 'nullable|string|max:255', // ✅ string, no upload
-        ]);
+            // ✅ Kirim data langsung ke API backend (Internal POST)
+            $response = $this->internalApiCall('POST', '/api/products', $validated);
 
-        // ✅ Kirim data langsung ke API backend
-        $response = Http::post($this->backendApiUrl . '/products', $validated);
+            if (!$response->successful) {
+                // Ambil pesan error dari body json jika ada
+                $msg = isset($response->body['message']) ? $response->body['message'] : 'Terjadi kesalahan';
+                return back()->with('error', 'API Error: ' . $msg);
+            }
 
-        if (!$response->successful()) {
-            return back()->with('error', 'API Error: ' . $response->body());
+            return redirect()
+                ->route('inventory.index')
+                ->with('success', 'Product created successfully');
+
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        return redirect()
-            ->route('inventory.index')
-            ->with('success', 'Product created successfully');
-
-    } catch (\Exception $e) {
-        return back()->with('error', $e->getMessage());
     }
-}
 
- public function edit($id)
+    public function edit($id)
     {
         $product = null;
 
         try {
-            $response = Http::get($this->backendApiUrl . "/products/$id");
+            // ✅ Internal GET single product
+            $response = $this->internalApiCall('GET', "/api/products/$id");
 
-            if ($response->successful()) {
-                $product = $response->json();
+            if ($response->successful) {
+                $product = $response->body;
             } else {
                 return back()->with('error', 'Product not found');
             }
@@ -142,9 +154,10 @@ class FrontInventoryController extends Controller
         ];
 
         try {
-            $response = Http::put($this->backendApiUrl . "/products/$id", $payload);
+            // ✅ Internal PUT request
+            $response = $this->internalApiCall('PUT', "/api/products/$id", $payload);
 
-            if ($response->successful()) {
+            if ($response->successful) {
                 return redirect()
                     ->route('inventory.index')
                     ->with('success', 'Product updated successfully');
@@ -155,5 +168,4 @@ class FrontInventoryController extends Controller
             return back()->with('error', 'API Error: ' . $e->getMessage());
         }
     }
-
 }

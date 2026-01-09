@@ -4,56 +4,59 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Route; // Tambahkan ini
 
 class FrontAuthController extends Controller
 {
-    protected $backendApiUrl;
-    public function __construct()
-    {
-        $this->backendApiUrl = rtrim(env('BACKEND', 'http://127.0.0.1:8000/api'), '/');
-
-    }
+    // Constructor tidak lagi dibutuhkan karena kita tidak pakai URL eksternal
+    // public function __construct() {}
 
     public function login(Request $request)
     {
+        // 1. Validasi Input
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
-        // Call Backend API
-        $response = Http::post($this->backendApiUrl . "/login", $credentials);
+        // 2. BUAT REQUEST BOHONGAN (Internal Proxy)
+        // Kita membuat request seolah-olah ada user menembak ke '/api/login'
+        // Pastikan route '/api/login' benar-benar ada di routes/api.php
+        $proxyRequest = Request::create('/api/login', 'POST', $credentials);
+        
+        // PENTING: Paksa header agar API merespon JSON, bukan redirect HTML
+        $proxyRequest->headers->set('Accept', 'application/json');
 
-        // Decode JSON
-        $result = $response->json();
+        // 3. JALANKAN REQUEST DI DALAM MEMORI
+        // app()->handle() akan memproses request tanpa melewati Nginx/Internet
+        $response = app()->handle($proxyRequest);
 
-        // Jika API gagal
-        if (!$response->successful() || $result['status'] != 200) {
-            return back()->with('error', $result['message'] ?? 'Login gagal.');
+        // 4. AMBIL HASILNYA
+        // Karena response-nya raw, kita harus decode JSON-nya manual
+        $result = json_decode($response->getContent(), true);
+        $statusCode = $response->getStatusCode();
+
+        // 5. CEK STATUS
+        // Jika status bukan 200 (misal 401 Unauthorized atau 500 Error)
+        if ($statusCode != 200) {
+            return back()->with('error', $result['message'] ?? 'Login gagal, periksa email/password.');
         }
 
-        // Data user dari API
-        $user = $result['data'];
+        // 6. PROSES LOGIN BERHASIL
+        $user = $result['data']; // Pastikan struktur JSON API kamu ada key 'data'
 
-        // Simpan ke session
         session([
             'user_id' => $user['id'],
-            'username' => $user['username'],
+            'username' => $user['username'] ?? $user['name'], // Jaga-jaga beda nama kolom
             'email' => $user['email'],
             'role' => $user['role'],
             'logged_in' => true,
         ]);
 
-        // Regenerate session
         $request->session()->regenerate();
-
-
 
         return redirect()->intended(route('reports.index'));
     }
-
 
     public function logout(Request $request)
     {
@@ -61,5 +64,4 @@ class FrontAuthController extends Controller
         $request->session()->regenerate();
         return redirect(route('login'));
     }
-
 }

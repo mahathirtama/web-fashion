@@ -4,44 +4,58 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+// use Illuminate\Support\Facades\Http; // Tidak dipakai lagi
 
 class FrontReportController extends Controller
 {
-    protected $backendApiUrl;
-    protected $backendBaseUrl;
-
-    public function __construct()
+    // Helper function untuk Internal Request
+    private function internalApiCall($method, $uri, $data = [])
     {
-        // API: http://127.0.0.1:8000/api
-        $this->backendApiUrl = rtrim(env('BACKEND', 'http://127.0.0.1:8000/api'), '/');
+        // 1. Buat Request Bohongan
+        // Parameter ke-3 ($data) di Request::create akan otomatis masuk ke query string (untuk GET) atau body (untuk POST)
+        $request = Request::create($uri, $method, $data);
+        
+        // 2. Set Header agar dianggap JSON Request
+        $request->headers->set('Accept', 'application/json');
 
-        // Base URL: http://127.0.0.1:8000
-        $this->backendBaseUrl = preg_replace('#/api$#', '', $this->backendApiUrl);
+        // 3. Eksekusi di dalam memori
+        $response = app()->handle($request);
+
+        // 4. Return object sederhana
+        return (object) [
+            'status' => $response->getStatusCode(),
+            'body' => json_decode($response->getContent(), true),
+            'successful' => $response->getStatusCode() >= 200 && $response->getStatusCode() < 300,
+        ];
     }
 
     public function index(Request $request)
     {
-        // Ambil tanggal dari query
+        // Ambil tanggal dari query string browser
         $startDate = $request->query('start_date', now()->subDays(30)->toDateString());
         $endDate   = $request->query('end_date', now()->toDateString());
 
-        // Panggil API Report
-        $response = Http::get($this->backendApiUrl . '/reports', [
+        // Siapkan parameter untuk dikirim ke API
+        $queryParams = [
             'start_date' => $startDate,
             'end_date'   => $endDate,
-        ]);
+        ];
 
-        if (!$response->successful()) {
+        // ✅ Ubah Http::get menjadi Internal Call ke /api/reports
+        // Query params dikirim sebagai argumen ke-3
+        $response = $this->internalApiCall('GET', '/api/reports', $queryParams);
+
+        if (!$response->successful) {
             return view('reports.index', [
-                'error' => 'Failed to fetch report from backend API',
+                'error' => 'Failed to fetch report from backend API: ' . ($response->body['message'] ?? 'Unknown Error'),
                 'report' => null,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
             ]);
         }
 
-        $data = $response->json()['data'];
+        // Ambil data dari key 'data' (sesuai standar JSON Response kamu)
+        $data = $response->body['data'] ?? [];
 
         return view('reports.index', [
             'report' => $data,

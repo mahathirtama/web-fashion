@@ -23,7 +23,7 @@
                             <th scope="col">Invoice #</th>
                             <!-- <th scope="col">Customer</th> -->
                             <th scope="col">Date</th>
-                            <th scope="col">Due Date</th>
+  
                             <th scope="col">Total Amount</th>
                             <th scope="col">Status</th>
                             <th scope="col">Actions</th>
@@ -34,7 +34,7 @@
                                 <tr>
                                     <td>{{ 'INV-' . str_pad($inv['id'], 3, '0', STR_PAD_LEFT) }}</td>
                                     <td>{{ $inv['tanggal'] }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($inv['tanggal'])->addDays(7)->format('Y-m-d') }}</td>
+                                    
                                     <td>Rp {{ number_format($inv['total'], 0, ',', '.') }}</td>
 
                                     <td>
